@@ -7,6 +7,7 @@ It was tested on CelebA dataset.
 
 ## Structure
 
+```bash
 .
 ├── CVAE                    # Directory with CVAE model \
 │   ├── cvae.py             # Main file with training loop \
@@ -15,6 +16,7 @@ It was tested on CelebA dataset.
 │   └── run_training.sh     # Script for running training \
 ├── README.md \
 └── my_secrets.py           # File with keys and paths for this project 
+```
 
 
 ## Setup
