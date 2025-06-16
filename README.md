@@ -8,13 +8,13 @@ It was tested on CelebA dataset.
 ## Structure
 
 .
-├── CVAE                    # Directory with CVAE model
-│   ├── cvae.py             # Main file with training loop
-│   ├── data_prep.py        # Dataset and stuff
-│   ├── model.py            # Model
-│   └── run_training.sh     # Script for running training
-├── README.md
-└── my_secrets.py           # File with keys and paths for this project
+├── CVAE                    # Directory with CVAE model \
+│   ├── cvae.py             # Main file with training loop \
+│   ├── data_prep.py        # Dataset and stuff \
+│   ├── model.py            # Model \
+│   └── run_training.sh     # Script for running training \
+├── README.md \
+└── my_secrets.py           # File with keys and paths for this project 
 
 
 ## Setup
