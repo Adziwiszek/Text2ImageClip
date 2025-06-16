@@ -4,7 +4,18 @@ Text to image model made in pytorch. This project uses CLIP model from OpenAI
 with Conditional Variational Auto-Encoder to generate images from text prompts.
 It was tested on CelebA dataset.
 
-`run_training.sh` starts training in the background.
+
+## Structure
+
+.
+├── CVAE                    # Directory with CVAE model
+│   ├── cvae.py             # Main file with training loop
+│   ├── data_prep.py        # Dataset and stuff
+│   ├── model.py            # Model
+│   └── run_training.sh     # Script for running training
+├── README.md
+└── my_secrets.py           # File with keys and paths for this project
+
 
 ## Setup
 
@@ -28,14 +39,22 @@ wandb_key = YOUR_KEY
 wandb_proj_name = YOUR_PROJECT_NAME
 
 data_path = PATH_TO_DATA
-img_path = os.path.join(data_path, IMAGE_SUBDIRECTORY)
-attr_path = os.path.join(data_path, ATTRIBUTE_SUBDIRECTORY)
+celeba_img_path = os.path.join(data_path, IMAGE_SUBDIRECTORY)
+celeba_attr_path = os.path.join(data_path, ATTRIBUTE_SUBDIRECTORY)
 ```
 
 
-- Use `run_training.sh` to start training
+3. Use `run_training.sh` to start training in the background
 
-```
+```bash
 chmod +x run_training.sh
 ./run_training.sh
 ```
+
+4. Or run directly:
+
+```bash
+python -m CVAE.cvae
+```
+
+

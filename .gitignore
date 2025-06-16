@@ -189,3 +189,6 @@ cython_debug/
 
 secrets.txt
 my_secrets.py
+log.txt
+model.pth
+
