@@ -18,6 +18,7 @@ It was tested on CelebA dataset.
 ├── README.md
 ├── __init__.py
 ├── my_secrets.py           # File with keys and paths for this project 
+├── requirements.txt
 └── run_cvae_training.sh    # Script for starting CVAE training
 ```
 
