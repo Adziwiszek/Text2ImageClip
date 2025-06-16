@@ -28,15 +28,15 @@ It was tested on CelebA dataset.
 1. Clone the repo and setup virtual environment
 
 ```bash
-git clone https://github.com/your_username/clip-cvae.git
-cd clip-cvae
+git clone git@github.com:Adziwiszek/Text2ImageClip.git
+cd Text2ImageClip
 
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-2. Create `my_secrets.py' (it is already in gitignore) file with following structure:
+2. Create my_secrets.py (it is already in gitignore) file with following structure:
 
 ```python
 import os
