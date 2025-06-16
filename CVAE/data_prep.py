@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 import os
 
-from cvae import generate_text_embeddings
+from .common import generate_text_embeddings
 
 
 # Map to turn binary attributes to something that resembles a sentence

@@ -22,11 +22,11 @@ from tqdm import tqdm
 import multiprocessing as mp
 import typer
 
-from ..my_secrets import wandb_proj_name, wandb_key, celeba_img_path, celeba_attr_path
-from model import ClipCVAE
-from data_prep import CelebADataset
+from my_secrets import wandb_key, wandb_proj_name, celeba_img_path, celeba_attr_path
+from .model import ClipCVAE
+from .data_prep import CelebADataset
+from .common import device, generate_text_embeddings
 
-device = 'cuda'
 
 # Prompts for generating images each epoch
 prompts = [
@@ -38,14 +38,6 @@ prompts = [
 def generate_and_log_images(model):
     images = [wandb.Image(model.generate_image(prompt), caption=prompt) for prompt in prompts]
     wandb.log({"Generated image": images})
-
-def generate_text_embeddings(text_prompts, clip_model):
-    text_tokens = clip.tokenize(text_prompts).to(device)
-    with torch.no_grad():
-        text_embeddings = clip_model.encode_text(text_tokens)
-    return text_embeddings.cpu()
-
-
 
 def loss_function(recon_x, x, mu, logvar, criterion):
     recon_loss = criterion(recon_x, x)

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from PIL import Image
 
-from cvae import device, generate_text_embeddings
+from .common import device, generate_text_embeddings
 
 class ClipCVAE(nn.Module):
     def __init__(
