@@ -13,7 +13,8 @@ It was tested on CelebA dataset.
 │   ├── __init__.py         
 │   ├── cvae.py             # Main file with training loop 
 │   ├── data_prep.py        # Dataset and stuff 
-│   └── model.py            # Model
+│   ├── model.py            # Model
+│   └── common.py      
 ├── README.md
 ├── __init__.py
 ├── my_secrets.py           # File with keys and paths for this project 
