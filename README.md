@@ -10,12 +10,14 @@ It was tested on CelebA dataset.
 ```bash
 .
 ├── CVAE                    # Directory with CVAE model 
+│   ├── __init__.py         
 │   ├── cvae.py             # Main file with training loop 
 │   ├── data_prep.py        # Dataset and stuff 
-│   ├── model.py            # Model 
-│   └── run_training.sh     # Script for running training 
-├── README.md 
-└── my_secrets.py           # File with keys and paths for this project 
+│   └── model.py            # Model
+├── README.md
+├── __init__.py
+├── my_secrets.py           # File with keys and paths for this project 
+└── run_cvae_training.sh    # Script for starting CVAE training
 ```
 
 
