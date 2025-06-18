@@ -2,8 +2,6 @@ import torch
 import numpy as np
 import torch.nn as nn
 import pandas as pd
-import matplotlib.pyplot as plt
-from torchvision.datasets import MNIST, CelebA
 from torch.utils.data import DataLoader, Dataset
 import torch.optim as optim
 import torch.nn.functional as F
@@ -14,10 +12,6 @@ from PIL import Image
 import os
 import wandb
 import clip
-import sys
-import zipfile
-import requests
-from collections import defaultdict
 from tqdm import tqdm
 import multiprocessing as mp
 import typer
@@ -25,7 +19,7 @@ import typer
 from my_secrets import wandb_key, wandb_proj_name, celeba_img_path, celeba_attr_path
 from .model import ClipCVAE
 from .data_prep import CelebADataset
-from .common import device, generate_text_embeddings
+from .common import device
 
 
 # Prompts for generating images each epoch
@@ -35,14 +29,18 @@ prompts = [
     "Old black bald man with beard",
 ]
 
+
 def generate_and_log_images(model):
-    images = [wandb.Image(model.generate_image(prompt), caption=prompt) for prompt in prompts]
+    images = [wandb.Image(model.generate_image(prompt), caption=prompt)
+              for prompt in prompts]
     wandb.log({"Generated image": images})
+
 
 def loss_function(recon_x, x, mu, logvar, criterion):
     recon_loss = criterion(recon_x, x)
     KL = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     return recon_loss + KL
+
 
 def train(model, dataloader, optimizer, criterion, num_epochs):
     for epoch in range(1, num_epochs + 1):
@@ -68,6 +66,7 @@ def train(model, dataloader, optimizer, criterion, num_epochs):
 
     return model
 
+
 def run_training():
     wandb.login(key=wandb_key)
 
@@ -80,8 +79,8 @@ def run_training():
     df_attrs = pd.read_csv(celeba_attr_path)
 
     attributes = [col for col in df_attrs.columns]
-    #attribute2id = {att: id for id, att in enumerate(attributes)}
-    #id2attribute = {id: att for id, att in enumerate(attributes)}
+    # attribute2id = {att: id for id, att in enumerate(attributes)}
+    # id2attribute = {id: att for id, att in enumerate(attributes)}
 
     transform = transforms.Compose([
         transforms.Resize((64, 64)),
@@ -105,10 +104,10 @@ def run_training():
     clip_dim = 512
     model = ClipCVAE(
         clip_model,
-        img_channels=3, 
-        img_size=64, 
+        img_channels=3,
+        img_size=64,
         latent_dim=latent_dim,
-        cond_dim=cond_dim, 
+        cond_dim=cond_dim,
         clip_dim=clip_dim) \
         .to(device)
 
@@ -122,28 +121,26 @@ def run_training():
     wandb.init(
         project=wandb_proj_name,
         config={
-            "epochs":num_epochs,
-            "batch_size":batch_size,
-            "learning_rate":lr,
+            "epochs": num_epochs,
+            "batch_size": batch_size,
+            "learning_rate": lr,
             "fresh_start": False,
             "batch_norm": False,
             }
     )
 
     train(model, dataloader, optimizer, criterion, num_epochs)
-    #model.load_state_dict(torch.load('model.pth'))
+    # model.load_state_dict(torch.load('model.pth'))
 
     # Saving model parameters
-    #torch.save(model.state_dict(), "model.pth")
+    torch.save(model.state_dict(), "model.pth")
     artifact = wandb.Artifact("model_params", type="model")
     artifact.add_file("model.pth")
     wandb.log_artifact(artifact)
 
-    # Generating images on trained model and logging them on wandb
-
     wandb.finish()
+
 
 if __name__ == "__main__":
     mp.set_start_method('spawn', force=True)
-    #app()
     run_training()
