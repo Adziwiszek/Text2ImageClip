@@ -191,4 +191,4 @@ secrets.txt
 my_secrets.py
 log.txt
 model.pth
-
+wandb/*
