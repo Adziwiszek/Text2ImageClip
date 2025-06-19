@@ -50,6 +50,7 @@ template_map = {
     "Young": ("a young", "an old"),
 }
 
+
 def attributes_to_sentence(attr_vector, attributes):
     # Build sentence components
     active = [name for bit, name in zip(attr_vector, attributes) if bit == 1]
@@ -66,6 +67,7 @@ def attributes_to_sentence(attr_vector, attributes):
                 description_parts.append(phrase)
 
     return " ".join(description_parts)
+
 
 class CelebADataset(Dataset):
     def __init__(self, img_dir, attr_df, attributes, clip_model, transform=None):
@@ -86,11 +88,13 @@ class CelebADataset(Dataset):
         if self.transform:
             image = self.transform(image)
         row = self.attr_df.iloc[idx]
-        label = torch.tensor(row[1:].values.astype(float),
-                dtype=torch.float32)
+        label = torch.tensor(row[1:].values.astype(float), dtype=torch.float32)
         label = label + 1
         label = label // 2
 
-        clip_embed = generate_text_embeddings(attributes_to_sentence(label, self.attributes), self.clip_model)
+        clip_embed = generate_text_embeddings(
+                attributes_to_sentence(label, self.attributes),
+                self.clip_model
+                )
 
         return image, label, clip_embed

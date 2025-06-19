@@ -1,25 +1,42 @@
-import torch
-import numpy as np
 import torch.nn as nn
-import pandas as pd
-from torch.utils.data import DataLoader, Dataset
-import torch.optim as optim
-import torch.nn.functional as F
-import torchvision.transforms as transforms
-from mpl_toolkits.axes_grid1 import ImageGrid
-from torchvision.utils import save_image, make_grid
-from PIL import Image
-import os
-import wandb
-import clip
-from tqdm import tqdm
-import multiprocessing as mp
-import typer
+
+# from torchtyping import TensorType
+# from typeguard import typechecked
 
 
 class Discriminator(nn.Module):
     def __init__(self):
-        ...
+        self.features = nn.Sequential(  # B, 3, 64, 64
+            nn.Conv2d(3, 32, kernel_size=5, stride=2, padding=2),
+            # B, 32, 32, 32
+            nn.ReLU(),
+            nn.Conv2d(32, 128, kernel_size=5, stride=2, padding=2),
+            # B, 128, 16, 16
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Conv2d(128, 256, kernel_size=5, stride=2, padding=2),
+            # B, 256, 8, 8
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+        )
+
+        self.classifier = nn.Sequential(
+            nn.Flatten(),  # B, 256 * 8 * 8
+            nn.Linear(256 * 8 * 8, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Linear(512, 1),
+            nn.Sigmoid()
+        )
 
     def forward(self, x):
-        ...
+        features = self.features(x)
+        out = self.classifier(features)
+        return out, features
+
+
+'''
+asf = Discriminator()
+test_batch = torch.ones((64, 3, 64, 64))  # [B, channels, xsize, ysize]
+test_res = asf(test_batch)
+'''

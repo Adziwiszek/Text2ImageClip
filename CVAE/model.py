@@ -51,7 +51,7 @@ class ClipCVAE(nn.Module):
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.ConvTranspose2d(64, img_channels, kernel_size=4, stride=2, padding=1),
-            nn.Tanh()
+            nn.Sigmoid()
         )
 
     def encode(self, x, c, clip_embedding):
@@ -90,19 +90,14 @@ class ClipCVAE(nn.Module):
             self.eval()
             text_embedding = generate_text_embeddings(prompt, self.clip_model).to(device)
 
-            # Step 2: Sample latent vector z ~ N(0, I)
             z = torch.randn(1, self.latent_dim).to(device)
 
-            # Step 3: Dummy condition vector (e.g., zeros if not specified)
             if c is None:
                 c = torch.zeros(1, self.cond_dim).to(device)
 
-            # Step 4: Decode to image
             recon = self.decode(z, c, text_embedding)
 
-            # Output shape: [1, 3, H, W], scale from [-1, 1] to [0, 255]
             recon = recon.squeeze(0).detach().cpu()
-            recon = (recon + 1) / 2  # scale to [0, 1]
             recon = recon.clamp(0, 1)
             recon_img = (recon * 255).byte().permute(1, 2, 0).numpy()
 

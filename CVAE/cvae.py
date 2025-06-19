@@ -2,6 +2,8 @@ import torch
 import numpy as np
 import torch.nn as nn
 import pandas as pd
+import matplotlib.pyplot as plt
+from torchvision.datasets import MNIST, CelebA
 from torch.utils.data import DataLoader, Dataset
 import torch.optim as optim
 import torch.nn.functional as F
