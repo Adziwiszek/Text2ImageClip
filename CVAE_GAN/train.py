@@ -19,7 +19,7 @@ import torch.nn.functional as F
 from my_secrets import wandb_key, wandb_proj_name, celeba_img_path, celeba_attr_path
 from .model import CVAE_GAN
 from ..CVAE.data_prep import CelebADataset
-from generate_data import generate_and_log_images, generate_from_prompts
+from generate_data import generate_from_prompts, log_reconstructed_images
 
 device = 'cuda'
 
@@ -35,7 +35,7 @@ def train_vaegan(model: CVAE_GAN,
     batches = len(dataloader.dataset)
 
     for epoch in range(1, num_epochs + 1):
-        generate_and_log_images(model, dataset, device)
+        log_reconstructed_images(model, dataset, device)
         generate_from_prompts(model)
 
         model.train()
