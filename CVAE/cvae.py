@@ -131,7 +131,7 @@ def run_training():
     criterion = nn.MSELoss(reduction='sum')
 
     # model training
-    num_epochs = 20
+    num_epochs = 7
 
     wandb.init(
         project=wandb_proj_name,

@@ -122,7 +122,7 @@ class PreCompCelebADataset(Dataset):
     def __getitem__(self, idx):
         filename = self.attr_df.iloc[idx].image_id
         img_path = os.path.join(self.img_dir, filename)
-        clip_path = os.path.join(self.emb_dir, filename + ".pth")
+        clip_path = os.path.join(self.emb_dir, filename + ".pt")
         image = Image.open(img_path)
 
         if self.transform:
@@ -132,7 +132,7 @@ class PreCompCelebADataset(Dataset):
         label = label + 1
         label = label // 2
 
-        clip_embed = torch.load(clip_path)
+        clip_embed = torch.load(clip_path, weights_only=True)
 
         return image, label, clip_embed
 
