@@ -10,11 +10,11 @@ from my_secrets import wandb_key, wandb_proj_name, celeba_img_path, celeba_attr_
 import wandb
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-LR = 1e-4
+LR = 3e-4
 BATCH_SIZE = 64
 IMAGE_SIZE = (64, 64)
 Z_DIM = 100
-NUM_EPOCHS = 20
+NUM_EPOCHS = 500
 CRITIC_ITERATIONS = 5
 LAMBDA = 10
 
@@ -33,7 +33,7 @@ transform = transforms.Compose(
 )
 
 dataset = datasets.ImageFolder(root=celeba_img_path, transform=transform)
-loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4, pin_memory=True, persistent_workers=True)
 gen = Generator(Z_DIM).to(DEVICE)
 cri = Critic().to(DEVICE)
 initialize_weights(gen)
@@ -48,23 +48,23 @@ cri.train()
 for epoch in range(NUM_EPOCHS):
     for batch_idx, (real, _) in enumerate(tqdm(loader, desc=f"Epoch: {epoch}")):
         real = real.to(DEVICE)
+        noise = torch.randn((real.size(0), Z_DIM, 1, 1)).to(DEVICE)
+        fake = gen(noise)
+        cri_fake = cri(fake).reshape(-1)
+
+        if batch_idx % (CRITIC_ITERATIONS + 1) == 0: 
+            loss_gen = -torch.mean(cri_fake)
+            gen.zero_grad()
+            loss_gen.backward()
+            opt_gen.step()
         
-        for _ in range(CRITIC_ITERATIONS):
-            noise = torch.randn((real.size(0), Z_DIM, 1, 1)).to(DEVICE)
-            fake = gen(noise)
+        else:
             cri_real = cri(real).reshape(-1)
-            cri_fake = cri(fake).reshape(-1)
             gp = gradient_penalty(cri, real, fake, DEVICE)
             loss_cri = torch.mean(cri_fake) - torch.mean(cri_real) + LAMBDA * gp
             cri.zero_grad()
-            loss_cri.backward(retain_graph=True)
+            loss_cri.backward()
             opt_cri.step()
-
-        cri_fake2 = cri(fake).reshape(-1)
-        loss_gen = -torch.mean(cri_fake2)
-        gen.zero_grad()
-        loss_gen.backward()
-        opt_gen.step()
 
         if batch_idx > 0 and batch_idx%100 == 0:
             with torch.no_grad():
