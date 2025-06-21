@@ -22,7 +22,7 @@ from my_secrets import wandb_key, wandb_proj_name, celeba_img_path, celeba_attr_
 
 from generate_data import generate_from_prompts, log_reconstructed_images
 from .model import ClipCVAE
-from .data_prep import CelebADataset
+from .data_prep import PreCompCelebADataset
 from .common import device
 
 
@@ -101,7 +101,7 @@ def run_training():
         )
     ])
 
-    dataset = CelebADataset(
+    dataset = PreCompCelebADataset(
         img_dir=celeba_img_path,
         attr_df=df_attrs,
         transform=transform,

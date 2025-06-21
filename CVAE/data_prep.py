@@ -107,6 +107,34 @@ class CelebADataset(Dataset):
 
         return image, label, clip_embed
 
+class PreCompCelebADataset(Dataset):
+    def __init__(self, img_dir, attr_df, attributes, clip_model, transform=None):
+        self.img_dir = img_dir
+        self.attr_df = attr_df
+        self.transform = transform
+        self.attributes = attributes
+        self.clip_model = clip_model
+
+    def __len__(self):
+        return len(self.attr_df)
+
+    def __getitem__(self, idx):
+        filename = self.attr_df.iloc[idx].image_id
+        img_path = os.path.join(self.img_dir, filename)
+        clip_path = os.path.join(img_path, ".pth")
+        image = Image.open(img_path)
+
+        if self.transform:
+            image = self.transform(image)
+        row = self.attr_df.iloc[idx]
+        label = torch.tensor(row[1:].values.astype(float), dtype=torch.float32)
+        label = label + 1
+        label = label // 2
+
+        clip_embed = torch.load(clip_path)
+
+        return image, label, clip_embed
+
 
 def precompute_clip_embeddings(dataset, output_dir):
     os.makedirs(output_dir, exist_ok=True)
