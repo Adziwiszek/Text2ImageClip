@@ -48,75 +48,67 @@ def train_vaegan(model: CVAE_GAN,
             attrs = attrs.to(device, non_blocking=True)
             clip_emb = clip_emb.to(device, non_blocking=True)
 
-            torch.autograd.set_detect_anomaly(True)
-
             with torch.autograd.set_detect_anomaly(True):
+                # Forward pass ----------------------------------------
 
                 # Encode X with reparameterization trick
                 mu, logvar = model.encode(x, attrs, clip_emb)
                 z = model.reparameterize(mu, logvar)
 
-                # Decode X_tilde with decoder
+                # Reconstruct and sample from prior
                 x_tilde = model.decode(z, attrs, clip_emb)
-
-                # Sample from prior N(0, I) and decode
                 z_p = torch.randn_like(z, requires_grad=True)
                 x_p = model.decode(z_p, attrs, clip_emb)
 
                 # Discriminating
-                disc_class_real, disc_feats_real = model.discriminator(x)
-                disc_class_pred, disc_feats_pred = model.discriminator(x_tilde)
-                disc_class_sampled, disc_feats_sampled = model.discriminator(x_p)
+                concat = torch.cat([x, x_tilde, x_p], dim=0)
+                class_logits, feat_maps = model.discriminator(concat)
 
-                '''
-                kl, mse, bce_dis_original, bce_dis_predicted, bce_dis_sampled = \
-                    CVAE_GAN.loss(
-                            disc_feats_real, disc_feats_pred, disc_feats_pred,
-                            disc_class_real, disc_class_pred, disc_class_pred,
-                            mu, logvar
-                            )
-                '''
-                    
-                # mse between intermediate featss
-                # mse = torch.sum(0.5*(disc_feats_original - disc_feats_predicted) ** 2, 1)
-                kl = -0.5 * torch.sum(-logvar.exp() - torch.pow(mu, 2) + logvar + 1, 1)
+                B = x.size(0)
+                real_logits   = class_logits[:B]
+                recon_logits  = class_logits[B:2*B]
+                sampled_logits= class_logits[2*B:]
 
-                # bce for decoder and discriminator for original and reconstructed
-                bce_dis_original = -torch.log(disc_class_real + 1e-3)
-                bce_dis_predicted = -torch.log(1 - disc_class_pred+ 1e-3)
-                bce_dis_sampled = -torch.log(1 - disc_class_sampled + 1e-3)
+                real_feats    = feat_maps[:B]
+                recon_feats   = feat_maps[B:2*B]
+                sampled_feats = feat_maps[2*B:]
 
-                mse_encoder = torch.sum(0.5*(disc_feats_real - disc_feats_pred) ** 2, 1)
+                # Calculate losses ----------------------------------------
+                # KL divergence
+                kl = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
 
-                disc_class_real2, disc_feats_real2 = model.discriminator(x)
-                disc_class_pred2, disc_feats_pred2 = model.discriminator(x_tilde)
-                mse_decoder = torch.sum(0.5*(disc_feats_real2 - disc_feats_pred2) ** 2, 1)
+                # Feature‑matching MSE (for encoder & decoder)
+                mse_enc = 0.5 * torch.sum((real_feats.detach() - recon_feats).pow(2), dim=(1,2,3))
+                mse_dec = 0.5 * torch.sum((real_feats   - recon_feats).pow(2), dim=(1,2,3))
 
-                loss_encoder = torch.sum(kl) + torch.sum(mse_encoder)
-                loss_discriminator = torch.sum(bce_dis_original) + torch.sum(bce_dis_predicted) + torch.sum(bce_dis_sampled)
-                loss_disc_decoder = loss_discriminator
-                loss_decoder = torch.sum(gamma * mse_decoder) - (1.0 - gamma) * loss_disc_decoder
+                # BCE losses
+                eps = 1e-3
+                bce_real    = -torch.log(real_logits    + eps)
+                bce_recon   = -torch.log(1 - recon_logits  + eps)
+                bce_sampled = -torch.log(1 - sampled_logits+ eps)
 
+                # Aggregate
+                loss_enc = (kl + mse_enc).sum()
+                loss_dis = (bce_real + bce_recon + bce_sampled).sum()
+                loss_dec = (gamma * mse_dec).sum() - (1 - gamma) * loss_dis
 
+                # Back-prop ----------------------------------------
+
+                # --- Encoder step ---
                 model.zero_grad()
-
-                # encoder
-                loss_encoder.backward(retain_graph=True)
+                loss_enc.backward(retain_graph=True)
                 optimizer_encoder.step()
+
+                # --- Decoder step ---
                 model.zero_grad()
-
-                # decoder
-                loss_decoder.backward(retain_graph=True)
+                loss_dec.backward(retain_graph=True)
                 optimizer_decoder.step()
-                model.discriminator.zero_grad()
-                '''
 
-                # discriminator
-                loss_discriminator.backward()
+                # --- Discriminator step ---
+                model.zero_grad()
+                loss_dis.backward()
                 optimizer_discriminator.step()
-                '''
-                return
-
+                    
 
         '''
         wandb.log({
