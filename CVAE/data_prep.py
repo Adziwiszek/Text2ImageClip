@@ -108,8 +108,9 @@ class CelebADataset(Dataset):
         return image, label, clip_embed
 
 class PreCompCelebADataset(Dataset):
-    def __init__(self, img_dir, attr_df, attributes, clip_model, transform=None):
+    def __init__(self, img_dir, attr_df, attributes, clip_model, emb_dir, transform=None):
         self.img_dir = img_dir
+        self.emb_dir = emb_dir
         self.attr_df = attr_df
         self.transform = transform
         self.attributes = attributes
@@ -121,7 +122,7 @@ class PreCompCelebADataset(Dataset):
     def __getitem__(self, idx):
         filename = self.attr_df.iloc[idx].image_id
         img_path = os.path.join(self.img_dir, filename)
-        clip_path = os.path.join(img_path, ".pth")
+        clip_path = os.path.join(self.emb_dir, filename + ".pth")
         image = Image.open(img_path)
 
         if self.transform:

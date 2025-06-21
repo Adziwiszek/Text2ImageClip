@@ -18,7 +18,7 @@ from tqdm import tqdm
 import multiprocessing as mp
 import typer
 
-from my_secrets import wandb_key, wandb_proj_name, celeba_img_path, celeba_attr_path
+from my_secrets import wandb_key, wandb_proj_name, celeba_img_path, celeba_attr_path, clip_path
 
 from generate_data import generate_from_prompts, log_reconstructed_images
 from .model import ClipCVAE
@@ -107,6 +107,7 @@ def run_training():
         transform=transform,
         attributes=attributes,
         clip_model=clip_model,
+        emb_dir=clip_path,
     )
 
     batch_size = 64
