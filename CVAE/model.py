@@ -24,16 +24,16 @@ class ClipCVAE(nn.Module):
 
         self.encoder = nn.Sequential(
             nn.Conv2d(img_channels + cond_dim + clip_dim, 64, kernel_size=4, stride=2, padding=1),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(128),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(256),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.Conv2d(256, 512, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(512),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.Flatten()
         )
         self.fc_mu = nn.Linear(512*4*4, latent_dim)

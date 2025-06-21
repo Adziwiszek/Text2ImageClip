@@ -19,9 +19,15 @@ import multiprocessing as mp
 import typer
 
 from my_secrets import wandb_key, wandb_proj_name, celeba_img_path, celeba_attr_path
+
+from generate_data import generate_from_prompts, log_reconstructed_images
 from .model import ClipCVAE
 from .data_prep import CelebADataset
 from .common import device
+
+
+random_seed = 2137
+torch.manual_seed(random_seed)
 
 
 # Prompts for generating images each epoch
@@ -44,8 +50,10 @@ def loss_function(recon_x, x, mu, logvar, criterion):
     return recon_loss + KL
 
 
-def train(model, dataloader, optimizer, criterion, num_epochs):
+def train(model, dataloader, dataset, optimizer, criterion, num_epochs):
     for epoch in range(1, num_epochs + 1):
+        log_reconstructed_images(model, dataset, device)
+        generate_from_prompts(model)
         model.train()
         train_loss = 0
         for _, (data, attrs, clip_emb) in enumerate(tqdm(dataloader, desc=f"Epoch {epoch}/{num_epochs}")):
@@ -64,7 +72,7 @@ def train(model, dataloader, optimizer, criterion, num_epochs):
         wandb.log({"train_loss": avg_loss})
         print(f'Epoch: {epoch}, Avg loss:{avg_loss:.4f}')
 
-        generate_and_log_images(model)
+        #generate_and_log_images(model)
 
     return model
 
@@ -87,6 +95,10 @@ def run_training():
     transform = transforms.Compose([
         transforms.Resize((64, 64)),
         transforms.ToTensor(),
+        transforms.Normalize(
+            [0.5 for _ in range(3)],
+            [0.5 for _ in range(3)]
+        )
     ])
 
     dataset = CelebADataset(
@@ -97,7 +109,7 @@ def run_training():
         clip_model=clip_model,
     )
 
-    batch_size = 128
+    batch_size = 64
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True,
                             num_workers=4)
 
@@ -118,7 +130,7 @@ def run_training():
     criterion = nn.MSELoss(reduction='sum')
 
     # model training
-    num_epochs = 5
+    num_epochs = 20
 
     wandb.init(
         project=wandb_proj_name,
@@ -126,12 +138,12 @@ def run_training():
             "epochs": num_epochs,
             "batch_size": batch_size,
             "learning_rate": lr,
-            "fresh_start": False,
-            "batch_norm": False,
+            "fresh_start": True,
+            "batch_norm": True,
             }
     )
 
-    train(model, dataloader, optimizer, criterion, num_epochs)
+    train(model, dataloader, dataset, optimizer, criterion, num_epochs)
     # model.load_state_dict(torch.load('model.pth'))
 
     # Saving model parameters

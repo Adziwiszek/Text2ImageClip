@@ -1,6 +1,6 @@
 import torch
 
-from ..CVAE.model import ClipCVAE
+from CVAE.model import ClipCVAE
 from .discriminator import Discriminator
 
 

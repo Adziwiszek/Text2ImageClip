@@ -1,4 +1,5 @@
 from torch.utils.data import Dataset
+import numpy as np
 import torch
 import wandb
 
@@ -52,9 +53,7 @@ def log_reconstructed_images(model, dataset, device):
         real = (real.clamp(0, 1) + 1) * 127.5
         recon = recon.cpu().permute(1, 2, 0).byte().numpy()
         real = real.cpu().permute(1, 2, 0).byte().numpy()
-        recon_imgs.append({
-          "original": wandb.Image(real),
-          "reconstruction": wandb.Image(recon)
-        })
+        both = np.hstack([real, recon])  # side-by-side
+        recon_imgs.append(wandb.Image(both))
 
     wandb.log({"reconstructions": recon_imgs})

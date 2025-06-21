@@ -1,9 +1,17 @@
 import torch
+import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 from PIL import Image
 import os
+import pandas as pd
+from tqdm import tqdm
+import clip
 
 from .common import generate_text_embeddings
+from my_secrets import clip_path, celeba_img_path, celeba_attr_path
+
+
+device = 'cuda'
 
 
 # Map to turn binary attributes to something that resembles a sentence
@@ -98,3 +106,55 @@ class CelebADataset(Dataset):
                 )
 
         return image, label, clip_embed
+
+
+def precompute_clip_embeddings(dataset, output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+
+    for idx in tqdm(range(len(dataset))):
+        row = dataset.attr_df.iloc[idx]
+        filename = row.image_id
+        clip_filename = os.path.join(output_dir, f"{filename}.pt")
+        if os.path.isfile(clip_filename):
+            continue
+        label = torch.tensor(row[1:].values.astype(float), dtype=torch.float32)
+        label = label + 1
+        label = label // 2
+
+        sentence = attributes_to_sentence(label, dataset.attributes)
+        clip_embed = generate_text_embeddings(sentence, dataset.clip_model)
+
+        torch.save(clip_embed, clip_filename)
+
+'''
+clip pretrainig stopped around here so might want to rerun pratraining on these indexes
+173766
+'''
+
+if __name__ == '__main__':
+    clip_model, _ = clip.load("ViT-B/32", device=device)
+    for param in clip_model.parameters():
+        param.requires_grad = False
+
+    df_attrs = pd.read_csv(celeba_attr_path)
+
+    attributes = [col for col in df_attrs.columns]
+
+    transform = transforms.Compose([
+        transforms.Resize((64, 64)),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            [0.5 for _ in range(3)],
+            [0.5 for _ in range(3)]
+        )
+    ])
+
+    dataset = CelebADataset(
+        img_dir=celeba_img_path,
+        attr_df=df_attrs,
+        transform=transform,
+        attributes=attributes,
+        clip_model=clip_model,
+    )
+
+    precompute_clip_embeddings(dataset, clip_path)
