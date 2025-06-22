@@ -1,11 +1,16 @@
 import torch
 
-def gradient_penalty(critic, real, fake, device="cpu"):
+tests = [([-1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0], 'a young woman with arched eyebrows looking attractive with brown hair wearing heavy makeup with high cheekbones with mouth slightly open without a beard with a pointy nose smiling with straight hair wearing earrings wearing lipstick'),
+([-1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0], 'a young woman with bags under the eyes with bangs with blond hair with high cheekbones with mouth slightly open without a beard with a pointy nose smiling'),
+([-1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0], 'a young woman with arched eyebrows looking attractive with blond hair wearing heavy makeup without a beard with an oval face with pale skin wearing lipstick wearing a necklace')]
+
+tests = [(torch.tensor(test[0], dtype=torch.float32),test[1]) for test in tests]
+
+def gradient_penalty(critic, real, fake, attr, device="cpu"):
     BATCH_SIZE, C, H, W = real.shape
     eps = torch.rand((BATCH_SIZE, 1, 1, 1)).repeat(1, C, H, W).to(device)
-    interpolated = real * eps + fake * (1-eps)
-
-    inter_score = critic(interpolated)
+    interpolated = torch.lerp(real, fake, eps)
+    inter_score = critic(interpolated, attr)
 
     gradient = torch.autograd.grad(
         inputs=interpolated,

@@ -2,20 +2,19 @@ import torch
 import torch.nn as nn
 
 class Critic(nn.Module):
-    def __init__(self, attr_dim, image_size):
+    def __init__(self, image_size):
         super(Critic, self).__init__()
 
-        self.attr_dim = attr_dim
         self.image_size = image_size
         self.disc = nn.Sequential(
-            nn.Conv2d(3 + attr_dim, 64, 4, 2, 1),
+            nn.Conv2d(2, 64, 4, 2, 1),
             nn.LeakyReLU(0.2),
             self._block(64,  128, 4, 2, 1),
             self._block(128, 256, 4, 2, 1),
             self._block(256, 512, 4, 2, 1),
             nn.Conv2d(512, 1, 4, 2, 0)
         )
-        self.embedding = nn.Embedding(attr_dim * 2, image_size*image_size)
+        self.embedding = nn.Embedding(10, image_size*image_size)
 
     def _block(self, in_channels, out_channels, kernel_size, stride, padding):
         return nn.Sequential(
@@ -31,25 +30,27 @@ class Critic(nn.Module):
             nn.LeakyReLU(0.2)
         )
 
-    def forward(self, x, attr):
-        embedding = self.embedding(attr).view(attr.shape[0], self.attr_dim, self.image_size, self.image_size)
+    def forward(self, x, labels):
+        embedding = self.embedding(labels).view(labels.shape[0], 1, self.image_size, self.image_size)
         x = torch.cat([x, embedding], dim=1)
         return self.disc(x)
     
 class Generator(nn.Module):
-    def __init__(self, z_dim, attr_dim, image_size):
+    def __init__(self, z_dim, image_size, emb_size):
         super(Generator, self).__init__()
 
         self.image_size = image_size
+        self.emb_size = emb_size
         self.gen = nn.Sequential(
-            self._block(z_dim + attr_dim, 1024, 4, 1, 0),
+            self._block(z_dim + emb_size, 1024, 4, 1, 0),
             self._block(1024, 512, 4, 2, 1),
             self._block(512, 256, 4, 2, 1),
             self._block(256, 128, 4, 2, 1),
-            nn.ConvTranspose2d(128, 3, 4, 2, 1),
+            nn.ConvTranspose2d(128, 1, 4, 2, 1),
             nn.Tanh()
         )
-
+        self.embedding = nn.Embedding(10, emb_size)
+        
     def _block(self, in_channels, out_channels, kernel_size, stride, padding):
         return nn.Sequential(
             nn.ConvTranspose2d(
@@ -64,10 +65,9 @@ class Generator(nn.Module):
             nn.ReLU()
         )
 
-    def forward(self, z, attr):
-        attr = attr.unsqueeze(2).unsqueeze(3)
-        # print(z.size(), attr.size())
-        x = torch.cat([z, attr], dim=1)
+    def forward(self, z, labels):
+        embedding = self.embedding(labels).unsqueeze(2).unsqueeze(3)
+        x = torch.cat([z, embedding], dim=1)
         return self.gen(x)
 
 def initialize_weights(model):
