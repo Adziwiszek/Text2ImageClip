@@ -1,7 +1,7 @@
 # Text to image generation with CLIP
 
-This project aims to implementa a text to image generation model using CLIP 
-and a couple of image generation models. Our goal is to how different models
+This project aims to implement a text to image generation model using CLIP 
+and a couple of image generation models. Our goal is to learn how different models
 perform in this task.
 
 # Architecture
@@ -33,7 +33,17 @@ We can use conditioning (e.g. concatenating a label or attribute vector to
 the input or latent vector) to generate data that corresponds to specific 
 attributes.
 
-## Generative Adversarial Network
+## Generative Adversarial Network (GAN)
+
+GAN's learn to generate images from noise by training 2 networks: generator and discriminator. Generator's role is to generate images (duh), and discriminator's role is to differentiate between real and fake images.
+
+## Many types of GAN's
+
+Our network is composed of multitude of GAN's such as:
+
+DCGAN: GAN that uses convolutional layers
+WGAN-GP: GAN that uses Wasserstein distance and "gradient penalty" instead of clipping
+cGAN: GAN that allows for controlling what gets generated
 
 # Data
 
@@ -54,7 +64,6 @@ sentence ("Eyeglasses" -> "wearing eyeglasses", "High_cheekbones" -> "with high 
 This was a straight forward method but it seemed enough for this usecase.
 
 Also to save time during training all CLIP embeddings of those prompts were precomputed.
-
 
 # Results
 
