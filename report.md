@@ -35,13 +35,25 @@ attributes.
 
 ## Generative Adversarial Network
 
-# Dataset
+# Data
+
+## Dataset
 
 We used CelebA dataset. It contains over 200000 portraits of celebrities, 
 each with 40 binary attributes (male, wavy hair, smiling, wearing 
 eyeglasses). We turned those attributes into prompts (with very simple mapping), the result was a simple text description for each image. It wasn't a perfect natural language sentence, but the method was pretty simple and straight forward so we decided to use it.
 
-// todo data preprocessing
+## Data preprocessing
+
+To speed up training we resized images to 64x64 and normalized them. 
+
+Since each image has a one-hot encoded attribute vector and we want a text
+description of the image, we use give each image a description made up from
+those attributes. This is done by turning each attribute into a part of a 
+sentence ("Eyeglasses" -> "wearing eyeglasses", "High_cheekbones" -> "with high cheeckbones"). 
+This was a straight forward method but it seemed enough for this usecase.
+
+Also to save time during training all CLIP embeddings of those prompts were precomputed.
 
 
 # Results
